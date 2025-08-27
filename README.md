@@ -19,8 +19,8 @@ pkg install opnsense_leases_widget
 ## Direct install:
 
 ```sh
-fetch -o /usr/local/opnsense/www/js/widgets/Leases.js https://raw.githubusercontent.com/mietzen/opnsense_leases_widget/refs/heads/main/Leases.js
-fetch -o /usr/local/opnsense/www/js/widgets/Metadata/Leases.xml https://raw.githubusercontent.com/mietzen/opnsense_leases_widget/refs/heads/main/Leases.xml
+fetch -o /usr/local/opnsense/www/js/widgets/Leases.js https://raw.githubusercontent.com/mietzen/opnsense-dnsmasq-leases-widget/refs/heads/main/Leases.js
+fetch -o /usr/local/opnsense/www/js/widgets/Metadata/Leases.xml https://raw.githubusercontent.com/mietzen/opnsense-dnsmasq-leases-widget/refs/heads/main/Leases.xml
 ```
 
 ---
