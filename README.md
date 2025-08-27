@@ -24,5 +24,7 @@ fetch -o /usr/local/opnsense/www/js/widgets/Metadata/Leases.xml https://raw.gith
 ```
 
 ---
-Tested on OPNsense 25.7.
+
+**Tested on:**
+- OPNsense 25.7
 
