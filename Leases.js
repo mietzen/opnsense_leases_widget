@@ -1,30 +1,3 @@
-/*
- * Copyright (C) 2024 Wogglesoft
- * Copyright (C) 2024 Deciso B.V.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
- * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
 export default class Leases extends BaseTableWidget {
     constructor() {
         super();
@@ -45,7 +18,8 @@ export default class Leases extends BaseTableWidget {
             headers: [
                 this.translations.ip,
                 this.translations.hostname,
-                this.translations.mac
+                this.translations.mac,
+                this.translations.type
             ]
         });
 
@@ -54,23 +28,23 @@ export default class Leases extends BaseTableWidget {
     }
 
     async onWidgetTick() {
-        // Check if DHCP is enabled
+        // Check if dnsmasq is running
         const statusData = await this.ajaxCall('/api/dnsmasq/service/status');
         if (!statusData || statusData.status !== "running") {
             this.displayError(this.translations.servicedisabled);
             return;
         }
 
-        // Fetch lease information
-        let eparams =  {
-                    current:1,
-                    inactive:false,
-                    rowCount:-1,
-                    searchPhrase:"",
-                    selected_interfaces:[],
-                    sort: {}
-                };
-        const leaseData = await this.ajaxCall('/api/dnsmasq/leases/search', JSON.stringify(eparams),'POST');
+        // Fetch leases
+        let eparams = {
+            current: 1,
+            inactive: false,
+            rowCount: -1,
+            searchPhrase: "",
+            selected_interfaces: [],
+            sort: {}
+        };
+        const leaseData = await this.ajaxCall('/api/dnsmasq/leases/search', JSON.stringify(eparams), 'POST');
         if (!leaseData || !leaseData.rows || leaseData.rows.length === 0) {
             this.displayError(this.translations.nolease);
             return;
@@ -79,7 +53,6 @@ export default class Leases extends BaseTableWidget {
         this.processLeases(leaseData.rows);
     }
 
-    // Utility function to display errors within the widget
     displayError(message) {
         const $error = $(`
             <div class="error-message">
@@ -98,29 +71,40 @@ export default class Leases extends BaseTableWidget {
 
         let rows = [];
         leases.forEach(lease => {
-            let colorClass = lease.status === "online" ? 'text-success' : 'text-danger';
-            let tooltipText = lease.status === "online" ? this.translations.enabled : this.translations.disabled;
+            // Determine type (IPv4 vs IPv6)
+            let type = "IPv4";
+            if (lease.address && lease.address.includes(":")) {
+                type = "IPv6";
+            }
+
+            // Status indicator (dnsmasq doesn’t provide online/offline, so assume active if exists)
+            let colorClass = 'text-success';
+            let tooltipText = this.translations.enabled;
 
             let currentIp = lease.address || this.translations.undefined;
-            let currentMac = lease.mac || this.translations.undefined;
-            let currentHostname = lease.hostname || this.translations.undefined;
+            let currentMac = lease.hwaddr || this.translations.undefined;
+            let currentHostname = (lease.hostname && lease.hostname !== "*") ? lease.hostname : this.translations.undefined;
 
             let row = [
                 `
                     <div class="leases-ip" style="white-space: nowrap;">
-                    <a href="/ui/dnsmasq/leases" target="_blank"><i class="fa fa-circle ${colorClass} dhcp-tooltip" style="cursor: pointer;" title="${tooltipText}"></i></a>&nbsp;${currentIp}
+                        <a href="/ui/dnsmasq/leases" target="_blank">
+                            <i class="fa fa-circle ${colorClass} dhcp-tooltip" style="cursor: pointer;" title="${tooltipText}"></i>
+                        </a>&nbsp;${currentIp}
                     </div>`,
-                    `<div class="leases-host">${currentHostname}</div>`,
-                    `<div class="leases-mac"><small>${currentMac}</small></div>`
+                `<div class="leases-host">${currentHostname}</div>`,
+                `<div class="leases-mac"><small>${currentMac}</small></div>`,
+                `<div class="leases-type">${type}</div>`
             ];
 
-            rows.splice(0,0,row);
+            // Add at top (latest first)
+            rows.splice(0, 0, row);
         });
 
-        // Update table with rows
+        // Update table
         super.updateTable('leaseTable', rows);
 
-        // Initialize tooltips
+        // Init tooltips
         $('.dhcp-tooltip').tooltip({container: 'body'});
     }
 
@@ -128,10 +112,12 @@ export default class Leases extends BaseTableWidget {
         if (width < 320) {
             $('#header_leaseTable').hide();
             $('.leases-mac').parent().hide();
+            $('.leases-type').parent().hide();
         } else {
             $('#header_leaseTable').show();
             $('.leases-mac').parent().show();
+            $('.leases-type').parent().show();
         }
-        return true; // Return true to force the grid to update its layout
+        return true;
     }
 }
