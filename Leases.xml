@@ -2,11 +2,11 @@
     <leases>
         <filename>Leases.js</filename>
         <endpoints>
-            <endpoint>/api/dhcpv4/leases/searchLease</endpoint>
+            <endpoint>/api/dnsmasq/leases/search</endpoint>
         </endpoints>
         <translations>
-            <title>DHCPv4 Leases</title>
-            <servicedisabled>DHCPv4 service is not running</servicedisabled>
+            <title>Dnsmasq Leases</title>
+            <servicedisabled>Dnsmasq service is not running</servicedisabled>
             <enabled>Online</enabled>
             <disabled>Offline</disabled>
             <ip>IP</ip>
