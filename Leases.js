@@ -55,7 +55,7 @@ export default class Leases extends BaseTableWidget {
 
     async onWidgetTick() {
         // Check if DHCP is enabled
-        const statusData = await this.ajaxCall('/api/dhcpv4/service/status');
+        const statusData = await this.ajaxCall('/api/dnsmasq/service/status');
         if (!statusData || statusData.status !== "running") {
             this.displayError(this.translations.servicedisabled);
             return;
@@ -70,7 +70,7 @@ export default class Leases extends BaseTableWidget {
                     selected_interfaces:[],
                     sort: {}
                 };
-        const leaseData = await this.ajaxCall('/api/dhcpv4/leases/searchLease', JSON.stringify(eparams),'POST');
+        const leaseData = await this.ajaxCall('/api/dnsmasq/leases/search', JSON.stringify(eparams),'POST');
         if (!leaseData || !leaseData.rows || leaseData.rows.length === 0) {
             this.displayError(this.translations.nolease);
             return;
@@ -83,7 +83,7 @@ export default class Leases extends BaseTableWidget {
     displayError(message) {
         const $error = $(`
             <div class="error-message">
-                <a href="/ui/dhcpv4/leases" target="_blank">${message}</a>
+                <a href="/ui/dnsmasq/leases" target="_blank">${message}</a>
             </div>
         `);
         $('#leaseTable').empty().append($error);
@@ -108,7 +108,7 @@ export default class Leases extends BaseTableWidget {
             let row = [
                 `
                     <div class="leases-ip" style="white-space: nowrap;">
-                    <a href="/ui/dhcpv4/leases" target="_blank"><i class="fa fa-circle ${colorClass} dhcp-tooltip" style="cursor: pointer;" title="${tooltipText}"></i></a>&nbsp;${currentIp}
+                    <a href="/ui/dnsmasq/leases" target="_blank"><i class="fa fa-circle ${colorClass} dhcp-tooltip" style="cursor: pointer;" title="${tooltipText}"></i></a>&nbsp;${currentIp}
                     </div>`,
                     `<div class="leases-host">${currentHostname}</div>`,
                     `<div class="leases-mac"><small>${currentMac}</small></div>`
